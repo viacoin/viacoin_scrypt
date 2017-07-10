@@ -32,6 +32,8 @@
 #include <stdint.h>
 #include <string.h>
 
+const int scrypt_scratchpad_size = 131583;
+
 static __inline uint32_t
 be32dec(const void *pp)
 {

@@ -1,42 +1,26 @@
 #include <Python.h>
+#include "scrypt.h"
 
-//#include "scrypt.h"
-
-/*
-static PyObject *scrypt_getpowhash(PyObject *self, PyObject *args)
-{
-    char *output;
-    PyObject *value;
-    PyStringObject *input;
-    if (!PyArg_ParseTuple(args, "S", &input))
-        return NULL;
-    Py_INCREF(input);
-    output = PyMem_Malloc(32);
-
-    scrypt_1024_1_1_256((char *)PyString_AsString((PyObject*) input), output);
-    Py_DECREF(input);
-    value = Py_BuildValue("s#", output, 32);
-    PyMem_Free(output);
-    return value;
-}
-*/
+#if PY_MAJOR_VERSION >= 3
+#define PY_STRING_FORMAT "y#"
+#else
+#define PY_STRING_FORMAT "s#"
+#endif
 
 static PyObject *scrypt_getpowhash(PyObject *self, PyObject *args, PyObject* kwargs) {
     char *input;
-    int      inputlen;
+    int inputlen;
 
     char *outbuf;
-    size_t   outbuflen;
 
     static char *g2_kwlist[] = {"input", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y#", g2_kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, PY_STRING_FORMAT, g2_kwlist,
                                      &input, &inputlen)) {
         return NULL;
     }
 
     outbuf = PyMem_Malloc(32);
-    outbuflen = 32;
 
     Py_BEGIN_ALLOW_THREADS;
     
@@ -46,18 +30,18 @@ static PyObject *scrypt_getpowhash(PyObject *self, PyObject *args, PyObject* kwa
 
     PyObject *value = NULL;
     
-    value = Py_BuildValue("y#", outbuf, 32);
+    value = Py_BuildValue(PY_STRING_FORMAT, outbuf, 32);
     
     PyMem_Free(outbuf);
     return value;
 }
-
 
 static PyMethodDef ScryptMethods[] = {
     { "getPoWHash", (PyCFunction) scrypt_getpowhash, METH_VARARGS | METH_KEYWORDS, "Returns the proof of work hash using scrypt" },
     { NULL, NULL, 0, NULL }
 };
 
+#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef scryptmodule = {
     PyModuleDef_HEAD_INIT,
     "viacoin_scrypt",
@@ -66,7 +50,7 @@ static struct PyModuleDef scryptmodule = {
     ScryptMethods
 };
 
-PyMODINIT_FUNC PyInit_litecoin_scrypt(void) {
+PyMODINIT_FUNC PyInit_viacoin_scrypt(void) {
     PyObject *m = PyModule_Create(&scryptmodule);
 
     if (m == NULL) {
@@ -75,3 +59,9 @@ PyMODINIT_FUNC PyInit_litecoin_scrypt(void) {
 
     return m;
 }
+#else
+PyMODINIT_FUNC initviacoin_scrypt(void) {
+    Py_InitModule("viacoin_scrypt", ScryptMethods);
+}
+#endif
+
